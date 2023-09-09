@@ -1,5 +1,6 @@
 using DifferentialEquations
 using LinearAlgebra
+using Plots
 
 
 function calc_m′(m) #calculate m^\prime_i = \sum_{k = i}^n m_k
@@ -16,7 +17,7 @@ end
 function A(m′, l, θ)
     n = length(θ)
     A = Matrix{eltype(θ)}(undef, n, n)
-    for j in 1:n
+    @inbounds @simd for j in 1:n
         for i in 1:n
             A[i, j] = m′[max(i, j)] * l[j] * cos(θ[i] - θ[j])
         end
@@ -26,7 +27,7 @@ end
 
 function b(m′, l, g, θ, θ̇)
     b = similar(θ)
-    for i in eachindex(b)
+    @inbounds @simd for i in eachindex(b)
         b[i] = -sum(m′[max(i, j)] * l[j] * θ̇[j]^2 * sin(θ[i] - θ[j]) for j in eachindex(b)) - m′[i] * g * sin(θ[i])
     end
     return b
@@ -40,7 +41,7 @@ function f(u, p, t)
     l = @view p[n+1:2n]
     g = p[end]
 
-    return vcat(θ̇, inv(A(m′, l, θ)) * b(m′, l, g, θ, θ̇))
+    return vcat(θ̇, A(m′, l, θ) \ b(m′, l, g, θ, θ̇))
 end
 
 function simulation(m, l, g, θ0, θ̇0, tspan, saveat, abstol)
@@ -63,7 +64,7 @@ function plot_pensdulum(θ, l)
         y[i] = y[i-1] - l[i-1] * cos(θ[i-1])
     end
     p = plot(x, y, xlim=(-L, L), ylim=(-L, L), aspect_ratio=1)
-    # scatter!(p, x, y)
+    scatter!(p, x, y)
     p
 end
 #using sincos may be faster than this(?)
@@ -78,6 +79,6 @@ function plot_result(sol, l, fname, fps)
 end
 
 function main()
-    simulation(ones(Float64,15), fill(0.1,15), 1.0, fill(5π/8, 15), zeros(Float64, 15), (0, 40.0), 0.2, 1e-9)
-    plot_result(sol, ones(Float64, 15), "./result/result_15.gif", 10)
+    sol = simulation(ones(Float64,4), fill(0.1,4), 1.0, fill(π/4, 4), zeros(Float64, 4), (0, 40.0), 0.2, 1e-9)
+    plot_result(sol, ones(Float64, 4), "./result/result_4.gif", 10)
 end
