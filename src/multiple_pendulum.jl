@@ -69,7 +69,6 @@ function plot_pensdulum(θ, l)
 end
 #using sincos may be faster than this(?)
 
-
 function plot_result(sol, l, fname, fps)
     n = length(sol.u[1]) ÷ 2
     anim = @animate for (i, e) in enumerate(sol.u)
@@ -79,6 +78,8 @@ function plot_result(sol, l, fname, fps)
 end
 
 function main()
-    sol = simulation(ones(Float64,4), fill(0.1,4), 1.0, fill(π/4, 4), zeros(Float64, 4), (0, 40.0), 0.2, 1e-9)
-    plot_result(sol, ones(Float64, 4), "./result/result_4.gif", 10)
+    sol = simulation(ones(Float64,4), fill(0.1,4), 1.0, fill(3π/4, 4), zeros(Float64, 4), (0, 40.0), 0.05, 1e-9)
+    plot_result(sol, ones(Float64, 4), "./result/result_4.gif", 60)
 end
+
+main()
